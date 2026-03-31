@@ -1,0 +1,70 @@
+# ==========================================
+# 1. ARCHIVOS DE SISTEMA Y TEMPORALES
+# ==========================================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+*.swp
+
+# ==========================================
+# 2. BACKEND (Java / Maven / IntelliJ)
+# ==========================================
+# Compilados y empaquetados
+backend/target/
+backend/*.jar
+backend/*.war
+
+# IntelliJ IDEA (Configuraciones de usuario)
+backend/.idea/
+*.iml
+*.iws
+backend/out/
+backend/.settings/
+backend/.classpath
+backend/.project
+
+# ==========================================
+# 3. FRONTEND (Node / React / VS Code)
+# ==========================================
+# Dependencias
+frontend/node_modules/
+
+# Compilados de producción
+frontend/dist/
+frontend/build/
+frontend/.next/
+
+# VS Code (Configuraciones locales)
+.vscode/
+frontend/.vscode/
+
+# Logs de npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Si usas Expo para React Native
+frontend/.expo/
+
+# ==========================================
+# 4. DOCKER Y BASES DE DATOS
+# ==========================================
+# ¡IMPORTANTE! No subir los datos reales de la DB al repo
+database/data/
+mysql_data/
+postgres_data/
+
+# Archivos de configuración con contraseñas
+docker-compose.override.yml
+
+# ==========================================
+# 5. SEGURIDAD Y VARIABLES DE ENTORNO
+# ==========================================
+# Nunca, bajo ningún concepto, subas estos archivos
+.env
+*.env
+backend/.env
+frontend/.env
+.plazos.txt

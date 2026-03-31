@@ -1,0 +1,8 @@
+Evidencia,Contenido Clave,Fecha Límite Sugerida,RA Asociados
+E1: Análisis,"Diagrama de Clases, DER (MySQL), Casos de Uso y Especificación de la API.", 5 de abril,"Diseño de Interfaces, Acceso a Datos."
+E2: Backend Base,API REST en Java (Spring Boot recomendado) + Persistencia MySQL + Docker inicial.,12 de abril,"Acceso a Datos, Programación de Servicios."
+E3: Lógica TOTP,Algoritmo de generación y validación de QR Dinámicos (Server-side).,19 de abril,"Programación Multimedia, Seguridad."
+E4: Conexión Odoo,Cliente XML-RPC o JSON-RPC para sincronizar stock y empleados con el ERP.,26 de abril,Sistemas de Gestión Empresarial (SGE).
+E5: Frontend App,App en React Native con lectura de QR y gestión de inventario básica.,3 de mayo,"PMDM, Diseño de Interfaces."
+E6: Infraestructura,Diseño en AWS (Documentación) + Docker Compose final.,10 de mayo,Despliegue de Aplicaciones.
+E7: Memoria y Vídeo,Documentación técnica completa y demo de funcionamiento.,15 de mayo,Todos.

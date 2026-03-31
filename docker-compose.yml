@@ -1,0 +1,44 @@
+services:
+  # --- BASE DE DATOS DE TU APP (MySQL) ---
+  db-app:
+    image: mysql:8.0
+    container_name: mysql-app
+    environment:
+      MYSQL_DATABASE: inventario_db
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3306:3306"
+
+  # --- BACKEND (Java) ---
+  backend:
+    build: ./backend
+    container_name: java-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db-app
+      - db-odoo
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-app:3306/inventario_db
+      ODOO_URL: http://odoo:8069
+
+  # --- ODOO Y SU BASE DE DATOS (Postgres) ---
+  db-odoo:
+    image: postgres:15
+    container_name: postgres-odoo
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo_password
+
+  odoo:
+    image: odoo:17.0
+    container_name: odoo-erp
+    depends_on:
+      - db-odoo
+    ports:
+      - "8069:8069"
+    environment:
+      HOST: db-odoo
+      USER: odoo
+      PASSWORD: odoo_password
