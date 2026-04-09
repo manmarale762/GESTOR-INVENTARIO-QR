@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
     secreta_totp VARCHAR(64) NOT NULL,         -- Semilla Base32 para validar el QR dinámico 
-    rol ENUM('trabajador', 'administrador') DEFAULT 'trabajador',
+    rol ENUM('TRABAJADOR', 'ADMINISTRADOR') DEFAULT 'TRABAJADOR',
     activo BOOLEAN DEFAULT TRUE,
     ultima_sincronizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_odoo_ref (odoo_user_id)           -- Optimización para el puente Java-Odoo
@@ -48,8 +48,8 @@ CREATE TABLE IF NOT EXISTS logs_acceso (
 
 -- 5. Datos de Prueba (Seeders)
 INSERT INTO usuarios (odoo_user_id, nombre, email, secreta_totp, rol) VALUES 
-(1, 'Admin Odoo', 'admin@ejemplo.com', 'JBSWY3DPEHPK3PXP', 'administrador'),
-(2, 'Operario Almacen', 'worker1@ejemplo.com', 'HXDMVJECJJWSRB3D', 'trabajador');
+(1, 'Admin Odoo', 'admin@ejemplo.com', 'JBSWY3DPEHPK3PXP', 'ADMINISTRADOR'),
+(2, 'Operario Almacen', 'worker1@ejemplo.com', 'HXDMVJECJJWSRB3D', 'TRABAJADOR');
 
 -- 6. Seguridad: Usuario de Aplicación (Privilegio Mínimo)
 -- Creamos el usuario limitado para el backend Java 
