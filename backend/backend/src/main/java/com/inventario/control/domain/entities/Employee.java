@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "usuarios") // Cambiado para coincidir con tu DDL
+@Table(name = "usuarios")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class Employee {
     @Id
