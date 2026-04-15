@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Gestor Inventario QR",
+    "slug": "gestor-inventario-qr",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#0f172a"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "La app necesita acceso a la cámara para escanear códigos QR dinámicos.",
+        "NSFaceIDUsageDescription": "La app puede usar Face ID para proteger la sesión del usuario."
+      }
+    },
+    "android": {
+      "permissions": [
+        "CAMERA"
+      ],
+      "package": "com.hsco.gestorinventarioqr"
+    },
+    "plugins": [
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": "Permitir a la app acceder a Face ID para proteger la sesión."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir a la app acceder a la cámara para escanear códigos QR."
+        }
+      ]
+    ]
+  }
+}
