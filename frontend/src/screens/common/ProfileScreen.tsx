@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
 import { APP_CONFIG } from '../../config/app';
 import { useAuth } from '../../context/AuthContext';
 import { AppText } from '../../components/AppText';
@@ -13,6 +13,26 @@ export function ProfileScreen() {
   const { session, signOut } = useAuth();
 
   if (!session) return null;
+
+  const handleSignOut = async () => {
+    if (Platform.OS === 'web') {
+      const ok = window.confirm('Se cerrará la sesión actual.');
+      if (!ok) return;
+      await signOut();
+      return;
+    }
+
+    Alert.alert('Cerrar sesión', 'Se cerrará la sesión actual.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Salir',
+        style: 'destructive',
+        onPress: () => {
+          void signOut();
+        },
+      },
+    ]);
+  };
 
   return (
     <Screen>
@@ -38,12 +58,7 @@ export function ProfileScreen() {
       <Button
         label="Cerrar sesión"
         variant="danger"
-        onPress={() => {
-          Alert.alert('Cerrar sesión', 'Se cerrará la sesión actual.', [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Salir', style: 'destructive', onPress: () => signOut() },
-          ]);
-        }}
+        onPress={handleSignOut}
       />
     </Screen>
   );

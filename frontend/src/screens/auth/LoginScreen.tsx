@@ -70,7 +70,7 @@ export function LoginScreen() {
         <AppText variant="subtitle">Modo de integración</AppText>
         <AppText>{APP_CONFIG.useMockApi ? 'Activo: API mock para demo.' : `Activo: backend real en ${APP_CONFIG.apiBaseUrl}`}</AppText>
         <AppText style={{ color: colors.textMuted }}>
-          Cambia src/config/app.ts para apuntar al backend Java y mantener el mismo flujo de pantallas.
+          En web usa automáticamente el host actual con el backend Java en el puerto 8080. En Android Emulator usa 10.0.2.2.
         </AppText>
       </Card>
     </Screen>

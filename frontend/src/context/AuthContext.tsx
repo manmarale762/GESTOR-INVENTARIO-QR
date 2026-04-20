@@ -18,13 +18,26 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     (async () => {
-      const storedSession = await getSession();
-      if (storedSession) {
-        setSession(storedSession);
+      try {
+        const storedSession = await getSession();
+        if (mounted && storedSession) {
+          setSession(storedSession);
+        }
+      } catch (error) {
+        console.warn('No se pudo recuperar la sesión:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
     })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const value = useMemo<AuthContextValue>(() => ({

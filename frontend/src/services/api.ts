@@ -1,16 +1,51 @@
 import axios from 'axios';
 import { APP_CONFIG } from '../config/app';
-import { buildSession, dashboardMetrics, demoPassword, inventory, loansByUser, movementHistory, users } from '../data/mock';
-import { DashboardMetrics, InventoryItem, Loan, LoginPayload, ScanRecord, ScanValidationRequest, ScanValidationResponse, Session } from '../types';
+import {
+  buildSession,
+  dashboardMetrics,
+  demoPassword,
+  inventory,
+  loansByUser,
+  movementHistory,
+  users,
+} from '../data/mock';
+import {
+  CatalogOption,
+  DashboardMetrics,
+  InventoryItem,
+  Loan,
+  LoginPayload,
+  ScanRecord,
+  ScanValidationRequest,
+  ScanValidationResponse,
+  Session,
+} from '../types';
 import { verifyDynamicQr } from './qr';
 
 const client = axios.create({
   baseURL: APP_CONFIG.apiBaseUrl,
-  timeout: 7000,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 function wait(ms = 350) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function toApiError(error: unknown): Error {
+  if (axios.isAxiosError(error)) {
+    const payload = error.response?.data;
+    if (typeof payload === 'string' && payload.trim()) {
+      return new Error(payload);
+    }
+    if (payload && typeof payload === 'object' && 'message' in payload && typeof payload.message === 'string') {
+      return new Error(payload.message);
+    }
+    return new Error(`Error HTTP ${error.response?.status ?? 'desconocido'} al llamar al backend.`);
+  }
+  return error instanceof Error ? error : new Error('Se produjo un error inesperado.');
 }
 
 async function loginMock(payload: LoginPayload): Promise<Session> {
@@ -40,6 +75,32 @@ async function getHistoryMock(): Promise<ScanRecord[]> {
 async function getDashboardMetricsMock(): Promise<DashboardMetrics> {
   await wait();
   return dashboardMetrics;
+}
+
+async function getAccessTargetsMock(): Promise<CatalogOption[]> {
+  await wait();
+
+  const values = Array.from(
+    new Set([
+      APP_CONFIG.defaultZone,
+      'Jaula de seguridad',
+      'Laboratorio técnico',
+      'Zona de picking',
+      'Zona restringida A',
+      'Taller 2',
+    ]),
+  );
+
+  return values.map((value) => ({ value, label: value }));
+}
+
+async function getAssetTargetsMock(): Promise<CatalogOption[]> {
+  await wait();
+
+  return inventory.map((item) => ({
+    value: item.id,
+    label: `${item.name} · ${item.serialNumber}`,
+  }));
 }
 
 async function validateScanMock(request: ScanValidationRequest): Promise<ScanValidationResponse> {
@@ -89,8 +150,12 @@ export const api = {
       return loginMock(payload);
     }
 
-    const { data } = await client.post<Session>('/auth/login', payload);
-    return data;
+    try {
+      const { data } = await client.post<Session>('/auth/login', payload);
+      return data;
+    } catch (error) {
+      throw toApiError(error);
+    }
   },
 
   async getLoans(userId: string) {
@@ -98,8 +163,12 @@ export const api = {
       return getLoansMock(userId);
     }
 
-    const { data } = await client.get<Loan[]>(`/workers/${userId}/loans`);
-    return data;
+    try {
+      const { data } = await client.get<Loan[]>(`/workers/${userId}/loans`);
+      return data;
+    } catch (error) {
+      throw toApiError(error);
+    }
   },
 
   async getInventory() {
@@ -107,8 +176,12 @@ export const api = {
       return getInventoryMock();
     }
 
-    const { data } = await client.get<InventoryItem[]>('/inventory');
-    return data;
+    try {
+      const { data } = await client.get<InventoryItem[]>('/inventory');
+      return data;
+    } catch (error) {
+      throw toApiError(error);
+    }
   },
 
   async getHistory() {
@@ -116,8 +189,12 @@ export const api = {
       return getHistoryMock();
     }
 
-    const { data } = await client.get<ScanRecord[]>('/movements');
-    return data;
+    try {
+      const { data } = await client.get<ScanRecord[]>('/movements');
+      return data;
+    } catch (error) {
+      throw toApiError(error);
+    }
   },
 
   async getDashboardMetrics() {
@@ -125,8 +202,38 @@ export const api = {
       return getDashboardMetricsMock();
     }
 
-    const { data } = await client.get<DashboardMetrics>('/dashboard');
-    return data;
+    try {
+      const { data } = await client.get<DashboardMetrics>('/dashboard');
+      return data;
+    } catch (error) {
+      throw toApiError(error);
+    }
+  },
+
+  async getAccessTargets() {
+    if (APP_CONFIG.useMockApi) {
+      return getAccessTargetsMock();
+    }
+
+    try {
+      const { data } = await client.get<CatalogOption[]>('/catalog/access-targets');
+      return data;
+    } catch (error) {
+      throw toApiError(error);
+    }
+  },
+
+  async getAssetTargets() {
+    if (APP_CONFIG.useMockApi) {
+      return getAssetTargetsMock();
+    }
+
+    try {
+      const { data } = await client.get<CatalogOption[]>('/catalog/asset-targets');
+      return data;
+    } catch (error) {
+      throw toApiError(error);
+    }
   },
 
   async validateScan(payload: ScanValidationRequest) {
@@ -134,7 +241,11 @@ export const api = {
       return validateScanMock(payload);
     }
 
-    const { data } = await client.post<ScanValidationResponse>('/access/validate', payload);
-    return data;
+    try {
+      const { data } = await client.post<ScanValidationResponse>('/access/validate', payload);
+      return data;
+    } catch (error) {
+      throw toApiError(error);
+    }
   },
 };

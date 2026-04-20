@@ -85,3 +85,8 @@ export interface ScanValidationResponse {
   message: string;
   record: ScanRecord;
 }
+
+export interface CatalogOption {
+  value: string;
+  label: string;
+}

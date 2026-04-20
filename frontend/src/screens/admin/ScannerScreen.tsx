@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { AppText } from '../../components/AppText';
@@ -7,9 +7,8 @@ import { Card } from '../../components/Card';
 import { Screen } from '../../components/Screen';
 import { SectionHeader } from '../../components/SectionHeader';
 import { APP_CONFIG } from '../../config/app';
-import { inventory } from '../../data/mock';
 import { api } from '../../services/api';
-import { ScanValidationResponse } from '../../types';
+import { CatalogOption, ScanValidationResponse } from '../../types';
 import { colors, radii, spacing } from '../../theme';
 
 const actions = [
@@ -24,11 +23,73 @@ export function ScannerScreen() {
   const [selectedTarget, setSelectedTarget] = useState(APP_CONFIG.defaultZone);
   const [scanLocked, setScanLocked] = useState(false);
   const [result, setResult] = useState<ScanValidationResponse | null>(null);
+  const [accessTargets, setAccessTargets] = useState<CatalogOption[]>([
+    { value: APP_CONFIG.defaultZone, label: APP_CONFIG.defaultZone },
+  ]);
+  const [assetTargets, setAssetTargets] = useState<CatalogOption[]>([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
 
-  const assetTargets = useMemo(() => inventory.map((item) => item.name), []);
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const [zones, assets] = await Promise.all([
+          api.getAccessTargets(),
+          api.getAssetTargets(),
+        ]);
+
+        if (!mounted) return;
+
+        setAccessTargets(
+          zones.length > 0
+            ? zones
+            : [{ value: APP_CONFIG.defaultZone, label: APP_CONFIG.defaultZone }],
+        );
+        setAssetTargets(assets);
+      } catch (error) {
+        if (!mounted) return;
+        Alert.alert(
+          'Aviso',
+          error instanceof Error
+            ? `No se pudo cargar el catálogo: ${error.message}`
+            : 'No se pudo cargar el catálogo.',
+        );
+      } finally {
+        if (mounted) {
+          setLoadingCatalog(false);
+        }
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const availableTargets = useMemo(
+    () => (selectedAction === 'access' ? accessTargets : assetTargets),
+    [selectedAction, accessTargets, assetTargets],
+  );
+
+  useEffect(() => {
+    if (availableTargets.length === 0) {
+      return;
+    }
+
+    const currentExists = availableTargets.some((option) => option.value === selectedTarget);
+    if (!currentExists) {
+      setSelectedTarget(availableTargets[0].value);
+    }
+  }, [availableTargets, selectedTarget]);
+
+  const selectedTargetLabel = useMemo(() => {
+    const match = availableTargets.find((option) => option.value === selectedTarget);
+    return match?.label ?? selectedTarget;
+  }, [availableTargets, selectedTarget]);
 
   const handleScanned = async ({ data }: { data: string }) => {
-    if (scanLocked) return;
+    if (scanLocked || !selectedTarget) return;
 
     setScanLocked(true);
     try {
@@ -47,7 +108,11 @@ export function ScannerScreen() {
   };
 
   if (!permission) {
-    return <Screen><AppText>Cargando permisos de cámara…</AppText></Screen>;
+    return (
+      <Screen>
+        <AppText>Cargando permisos de cámara…</AppText>
+      </Screen>
+    );
   }
 
   if (!permission.granted) {
@@ -70,24 +135,44 @@ export function ScannerScreen() {
               {actions.map((action) => (
                 <Pressable
                   key={action.key}
-                  onPress={() => {
-                    setSelectedAction(action.key);
-                    setSelectedTarget(action.key === 'access' ? APP_CONFIG.defaultZone : assetTargets[0]);
-                  }}
+                  onPress={() => setSelectedAction(action.key)}
                   style={[styles.segment, selectedAction === action.key && styles.segmentActive]}
                 >
-                  <AppText style={selectedAction === action.key ? styles.segmentLabelActive : undefined}>{action.label}</AppText>
+                  <AppText style={selectedAction === action.key ? styles.segmentLabelActive : undefined}>
+                    {action.label}
+                  </AppText>
                 </Pressable>
               ))}
             </View>
-            <AppText variant="subtitle" style={{ marginTop: spacing.sm }}>Objetivo</AppText>
-            <View style={styles.targetWrap}>
-              {(selectedAction === 'access' ? [APP_CONFIG.defaultZone, 'Jaula de seguridad', 'Laboratorio técnico'] : assetTargets).map((target) => (
-                <Pressable key={target} onPress={() => setSelectedTarget(target)} style={[styles.targetChip, selectedTarget === target && styles.targetChipActive]}>
-                  <AppText style={selectedTarget === target ? styles.segmentLabelActive : undefined}>{target}</AppText>
-                </Pressable>
-              ))}
-            </View>
+
+            <AppText variant="subtitle" style={{ marginTop: spacing.sm }}>
+              Objetivo
+            </AppText>
+
+            {loadingCatalog ? (
+              <AppText style={{ color: colors.textMuted }}>Cargando catálogo…</AppText>
+            ) : availableTargets.length === 0 ? (
+              <AppText style={{ color: colors.textMuted }}>
+                No hay objetivos disponibles para esta operación.
+              </AppText>
+            ) : (
+              <View style={styles.targetWrap}>
+                {availableTargets.map((target) => (
+                  <Pressable
+                    key={target.value}
+                    onPress={() => setSelectedTarget(target.value)}
+                    style={[
+                      styles.targetChip,
+                      selectedTarget === target.value && styles.targetChipActive,
+                    ]}
+                  >
+                    <AppText style={selectedTarget === target.value ? styles.segmentLabelActive : undefined}>
+                      {target.label}
+                    </AppText>
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </Card>
         </View>
 
@@ -110,10 +195,12 @@ export function ScannerScreen() {
               <AppText>{result.message}</AppText>
               <AppText style={{ color: colors.textMuted }}>Trabajador: {result.record.workerName}</AppText>
               <AppText style={{ color: colors.textMuted }}>Acción: {selectedAction}</AppText>
-              <AppText style={{ color: colors.textMuted }}>Objetivo: {result.record.target}</AppText>
+              <AppText style={{ color: colors.textMuted }}>Objetivo: {selectedTargetLabel}</AppText>
             </>
           ) : (
-            <AppText style={{ color: colors.textMuted }}>Todavía no se ha procesado ningún escaneo.</AppText>
+            <AppText style={{ color: colors.textMuted }}>
+              Todavía no se ha procesado ningún escaneo.
+            </AppText>
           )}
         </Card>
       </View>
