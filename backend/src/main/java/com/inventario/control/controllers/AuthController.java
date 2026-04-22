@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -38,21 +39,24 @@ public class AuthController {
                     .body(Map.of("message", "Contraseña incorrecta."));
         }
 
+        Map<String, Object> userPayload = new LinkedHashMap<>();
+        userPayload.put("id", String.valueOf(user.getId()));
+        userPayload.put("fullName", user.getNombre());
+        userPayload.put("email", user.getEmail());
+        userPayload.put("role", user.getRol() == null || user.getRol().name().equals("TRABAJADOR") ? "worker" : "admin");
+        userPayload.put("employeeCode", user.getEmployeeCode());
+        userPayload.put("zoneName", user.getZoneName());
+        userPayload.put("department", user.getDepartment());
+        userPayload.put("avatarColor", user.getAvatarColor());
+        userPayload.put("totpSecret", user.getSecretaTotp());
+        if (user.getOdooUserId() != null) {
+            userPayload.put("odooUserId", user.getOdooUserId());
+        }
+
         return ResponseEntity.ok(Map.of(
                 "token", UUID.randomUUID().toString(),
                 "refreshToken", UUID.randomUUID().toString(),
-                "user", Map.of(
-                        "id", String.valueOf(user.getId()),
-                        "fullName", user.getNombre(),
-                        "email", user.getEmail(),
-                        "role", user.getRol() == null || user.getRol().name().equals("TRABAJADOR") ? "worker" : "admin",
-                        "employeeCode", user.getEmployeeCode(),
-                        "zoneName", user.getZoneName(),
-                        "department", user.getDepartment(),
-                        "avatarColor", user.getAvatarColor(),
-                        "totpSecret", user.getSecretaTotp(),
-                        "odooUserId", user.getOdooUserId()
-                )
+                "user", userPayload
         ));
     }
 

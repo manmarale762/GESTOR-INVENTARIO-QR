@@ -67,4 +67,3 @@ docker-compose.override.yml
 *.env
 backend/.env
 frontend/.env
-.plazos.txt
