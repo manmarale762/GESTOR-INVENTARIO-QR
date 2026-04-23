@@ -82,4 +82,39 @@ class AuthControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Contraseña incorrecta."));
     }
+
+    @Test
+    void loginRejectsInvalidEmailFormat() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "worker-demo.com",
+                                  "password": "123456"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("El correo indicado no tiene un formato válido."));
+    }
+
+    @Test
+    void loginRejectsInactiveUser() throws Exception {
+        Employee employee = new Employee();
+        employee.setEmail("worker@demo.com");
+        employee.setPasswordApp("123456");
+        employee.setActivo(false);
+
+        when(employeeRepository.findByEmail("worker@demo.com")).thenReturn(Optional.of(employee));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "worker@demo.com",
+                                  "password": "123456"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Usuario no registrado o inactivo."));
+    }
 }

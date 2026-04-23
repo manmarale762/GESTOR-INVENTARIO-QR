@@ -10,10 +10,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     @Autowired
     private EmployeeRepository employeeRepository;
@@ -21,22 +25,23 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
         String email = normalize(loginRequest.get("email"));
-        String password = loginRequest.getOrDefault("password", "");
+        String password = normalizePassword(loginRequest.get("password"));
 
         if (email.isBlank() || password.isBlank()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "Debes informar correo y contraseña."));
+            return error(HttpStatus.BAD_REQUEST, "Debes informar correo y contraseña.");
+        }
+
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            return error(HttpStatus.BAD_REQUEST, "El correo indicado no tiene un formato válido.");
         }
 
         Employee user = employeeRepository.findByEmail(email).orElse(null);
         if (user == null || !Boolean.TRUE.equals(user.getActivo())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Usuario no registrado o inactivo."));
+            return error(HttpStatus.UNAUTHORIZED, "Usuario no registrado o inactivo.");
         }
 
         if (!password.equals(user.getPasswordApp())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Contraseña incorrecta."));
+            return error(HttpStatus.UNAUTHORIZED, "Contraseña incorrecta.");
         }
 
         Map<String, Object> userPayload = new LinkedHashMap<>();
@@ -62,5 +67,13 @@ public class AuthController {
 
     private String normalize(String value) {
         return value == null ? "" : value.trim().toLowerCase();
+    }
+
+    private String normalizePassword(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private ResponseEntity<Map<String, String>> error(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(Map.of("message", message));
     }
 }
