@@ -67,3 +67,8 @@ docker-compose.override.yml
 *.env
 backend/.env
 frontend/.env
+.codex
+.~lock.*#
+
+.attach_pid*
+backend/.attach_pid*
