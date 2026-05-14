@@ -17,16 +17,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/access")
 public class AccessController {
-
-    private static final Set<String> SUPPORTED_ACTIONS = Set.of("access", "checkout", "return");
 
     @Autowired
     private EmployeeRepository employeeRepository;
@@ -48,17 +44,12 @@ public class AccessController {
     @PostMapping("/validate")
     public ResponseEntity<?> validate(@RequestBody Map<String, String> payload) {
         String qrContent = payload.getOrDefault("qrContent", "");
-        String action = normalizeAction(payload.get("action"));
-        String target = normalizeText(payload.get("target"));
+        String action = payload.getOrDefault("action", "access");
+        String target = payload.getOrDefault("target", "");
 
         if (qrContent.isBlank() || target.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", "La petición debe incluir qrContent y target."));
-        }
-
-        if (!SUPPORTED_ACTIONS.contains(action)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "La acción indicada no es válida. Usa access, checkout o return."));
         }
 
         try {
@@ -138,16 +129,5 @@ public class AccessController {
                         "reason", reason
                 )
         ));
-    }
-
-    private String normalizeAction(String value) {
-        if (value == null || value.isBlank()) {
-            return "access";
-        }
-        return value.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private String normalizeText(String value) {
-        return value == null ? "" : value.trim();
     }
 }
